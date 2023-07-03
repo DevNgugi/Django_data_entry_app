@@ -64,11 +64,5 @@ def add(request, *args, **kwargs):
 class Search(APIView):
     def get(self,request, category):
         category_data= db_instance.posts.find( { "category": category})
-        # print (type(list(category_data)))
-        # data = [document for document in category_data]
-        # return JsonResponse ((list(category_data)),safe=False)
-        # return HttpResponse(json.dumps({'context_dict': category_data}),content_type='application/json; charset=utf8')
-        # myjson=utility.convertDocumentsToJson(category_data)
-        # return JsonResponse(myjson)
         serializer = DataSerializer(category_data, many=True)
         return JsonResponse(serializer.data,safe=False)
