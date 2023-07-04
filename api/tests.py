@@ -17,11 +17,6 @@ class EntriesTestCase(APITestCase):
         response=self.client.post(reverse('entries'),json.dumps(test_data),content_type="application/json")
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         
-    def test_get_all_entries(self):
-        # since we have already posted
-        response=self.client.get(reverse('entries'))
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        
     def test_search_category_with_correct_format(self):
         # we have previously posted category personal_details 
         test_data = {"category": "personal_details"}

@@ -8,7 +8,8 @@ from pymongo import MongoClient
 from .encoder import JsonEncoder
 
 # connection string
-connection_string='mongodb://localhost:27017'
+connection_string='mongodb+srv://admin:DZULvvyKVqIHoevx@cluster0.oiu9sds.mongodb.net/?retryWrites=true&w=majority'
+
 client=MongoClient(connection_string)
 
 # get database
