@@ -1,68 +1,76 @@
 import json
+import re
 from django.http import HttpResponse, JsonResponse
 from rest_framework.views import APIView
 from rest_framework.decorators import api_view
 from pymongo import MongoClient
-from rest_framework.response import Response
-from bson.json_util import dumps,loads
 from api.serializers import DataSerializer
 # connection string
 connection_string='mongodb://localhost:27017'
 client=MongoClient(connection_string)
 
 # get database
-db_instance=client.get_database('demo_database')
-# create collections dynamically 
-# check whether collection exists and if so, add the data to the existing collection
+db=client.get_database('demo_database')
 
-def getDB(request):
-    # return HttpResponse(db_instance.collection_names())
-    import datetime
-    post = {
-        "author": "Mike",
-        "text": "My first blog post!",
-        "tags": ["mongodb", "python", "pymongo"],
-        "date": datetime.datetime.now(tz=datetime.timezone.utc),
-        "mydate": datetime.datetime.now(tz=datetime.timezone.utc),
-        "secondat": datetime.datetime.now(tz=datetime.timezone.utc),
-     
-        }
-    posts = db_instance.posts
-    post_id = posts.insert_one(post).inserted_id
-    return HttpResponse(post_id)
-
-# class Add(APIView):
-    
-#     def get(self, request, *args, **kwargs):
-#         if "posts" in db_instance.list_collection_names():   
-#            return HttpResponse('exists')
-              
-#         else:
-#            return HttpResponse('doesnt exist')
-@api_view(['GET', 'POST'])
-def add(request, *args, **kwargs):
-    if request.method == 'POST':
-        post = json.loads(request.body)
-       
-        if "category" in post:
-            db_instance.posts.insert_one(post)
-            return HttpResponse('Data saved')
-            
+class Entries(APIView):
+    def get(self,request):
+        all_entries= list(db.entries.find())
+        if (len(all_entries)) == 0:
+            return JsonResponse({'error':'no data'})
         else:
-            return HttpResponse('Category key reqired')
+            serializer = DataSerializer(all_entries, many=True)
+            return JsonResponse(serializer.data,safe=False)
+        
             
-    # check whether the passed document has a category field*
-    # if not, return an error
-    # this category feld will be used during search
-    
-    # find -> search/sort based on category
-    # only unique items should be saved
-    # urls: add a field/must pass its category in json -> post request
-    # view category
-    # view records via search
-    
+    def post(self,request):
+        entry = json.loads(request.body)
+        # check whether the passed json has only category and data as the top level keys*
+        for key in entry.keys():
+            if key != 'category' and key !='data':
+                return JsonResponse({'error':'data format error'})
+
+        # check if unique
+        cursor =list( db.entries.find({"$and": [{"category": entry['category']}, {"data": entry['data']}]}))
+        if (len(cursor)) == 0:
+            db.entries.insert_one(entry)
+            return JsonResponse({'success':'data saved'})
+        else:
+            return JsonResponse({'error':'data exists'})
+            
+
+class Category(APIView):
+     # find/search based on category
+    def post(self,request, ):
+        category = json.loads(request.body)
+        # only category field should be passed
+        for key in category.keys():
+            if key != 'category':
+                return JsonResponse({'error':'data format error'})
+
+        category_data= list(db.entries.find( { "category": category['category']}))
+        if (len(category_data)) == 0:
+            return JsonResponse({'error':'no data'})
+        else:
+            serializer = DataSerializer(category_data, many=True)
+            return JsonResponse(serializer.data,safe=False)
+
 class Search(APIView):
-    def get(self,request, category):
-        category_data= db_instance.posts.find( { "category": category})
-        serializer = DataSerializer(category_data, many=True)
+     # find/search based on category
+    def post(self,request):
+        keywords = json.loads(request.body)
+        for key in keywords.keys():
+            if key != 'keywords' and key != 'field':
+                return JsonResponse({'error':'data format error'})
+        # search_pattern = re.compile(f".*{re.escape(keywords['keywords'])}.*", re.IGNORECASE)
+        # Perform the search query
+        keyword_list=(keywords['keywords'].split(','))
+        results=[]
+        for keyword in keyword_list:
+            results += db.entries.find( { keywords['field']: keyword})
+            
+        serializer = DataSerializer(results, many=True)
         return JsonResponse(serializer.data,safe=False)
+       
+# unit tests
+# git flow
+        
