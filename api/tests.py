@@ -1,5 +1,4 @@
 from django.urls import reverse
-from pymongo import MongoClient
 from rest_framework.test import APITestCase
 import json
 from rest_framework import status
