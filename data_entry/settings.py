@@ -81,7 +81,7 @@ DATABASES = {
         'NAME': 'demo_database',
         'ENFORCE_SCHEMA': False,
             'CLIENT': {
-            'host': 'mongodb://localhost:27017'
+            'host': 'mongodb+srv://admin:DZULvvyKVqIHoevx@cluster0.oiu9sds.mongodb.net/?retryWrites=true&w=majority'
 
             }
         
